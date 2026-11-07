@@ -21,7 +21,7 @@ function formatTime(seconds: number) {
   if (isNaN(seconds) || seconds < 0) return "0:00";
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  return `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
 }
 
 export const PlayerBar: React.FC = () => {
@@ -31,6 +31,7 @@ export const PlayerBar: React.FC = () => {
     currentTime,
     duration,
     volume,
+    frequencyData,
     beatIntensity,
     autoplay,
     toggleAutoplay,
@@ -56,172 +57,190 @@ export const PlayerBar: React.FC = () => {
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  // Soundwave heights curve for left (pink) and right (cyan)
+  const leftCurve = [0.3, 0.5, 0.85, 0.65, 0.95, 0.7, 0.4];
+  const rightCurve = [0.4, 0.7, 0.95, 0.65, 0.85, 0.5, 0.3];
+
   return (
     <div className="w-full">
       {/* ============================================================== */}
-      {/* MOBILE & TABLET CARD VIEW (< 1024px)                           */}
+      {/* MOBILE & TABLET CARD VIEW (< 1024px) - Exact Match to Design   */}
       {/* ============================================================== */}
-      <div className="block lg:hidden w-full max-w-sm mx-auto px-2">
-        <div className="relative overflow-hidden rounded-[32px] p-5 border border-fuchsia-500/40 bg-gradient-to-b from-[#180a30]/95 via-[#0c0924]/95 to-[#08081a]/95 backdrop-blur-2xl shadow-[0_0_35px_rgba(180,30,255,0.25)]">
-          {/* Subtle outer neon stroke glow */}
-          <div className="absolute inset-0 rounded-[32px] pointer-events-none border border-cyan-400/20" />
+      <div className="block lg:hidden w-full max-w-[360px] mx-auto px-2 py-4">
+        <div className="relative">
+          {/* Concentric Neon Glow Halo Rings around card */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] rounded-full border border-fuchsia-500/25 pointer-events-none shadow-[0_0_60px_rgba(210,27,255,0.25)]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] rounded-full border border-cyan-400/20 pointer-events-none shadow-[0_0_70px_rgba(49,201,255,0.18)]" />
 
-          {/* Row 1: Track Info + Cover + Like & Playlist Buttons */}
-          <div className="flex items-center justify-between gap-3 relative z-10 mb-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-14 h-14 rounded-2xl relative overflow-hidden bg-zinc-900 border border-fuchsia-500/40 shadow-[0_0_15px_rgba(210,27,255,0.35)] flex-shrink-0">
+          {/* Main Frosted Glass Media Player Card */}
+          <div className="relative rounded-[36px] p-5 sm:p-6 border border-white/20 bg-gradient-to-b from-white/[0.12] via-purple-950/20 to-black/80 backdrop-blur-3xl shadow-[0_20px_60px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.4)] overflow-hidden">
+            {/* Specular Inner Glass Bevel Highlight */}
+            <div className="absolute inset-0 rounded-[36px] border border-white/10 pointer-events-none" />
+
+            {/* Row 1: Left Pink Waves + Center Album Art + Right Cyan Waves */}
+            <div className="flex items-center justify-between gap-2 mb-5 relative z-10">
+              {/* Left Waveform (Pink / Fuchsia Bars) */}
+              <div className="flex items-center gap-1 sm:gap-1.5 h-20 justify-center flex-1">
+                {leftCurve.map((base, idx) => {
+                  const dataIdx = idx * 2;
+                  const val = isPlaying && frequencyData?.length > 0 ? (frequencyData[dataIdx] || 0) / 255 : 0;
+                  const barH = isPlaying
+                    ? Math.max(8, Math.min(52, val * 42 + beatIntensity * 12))
+                    : Math.max(8, base * 40);
+                  return (
+                    <div
+                      key={idx}
+                      className="w-1 sm:w-1.5 rounded-full bg-gradient-to-t from-fuchsia-600 via-pink-500 to-pink-300 shadow-[0_0_10px_rgba(236,72,153,0.6)] transition-all duration-75"
+                      style={{ height: `${barH}px` }}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Center Album Art with Soft Bevel */}
+              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden relative shadow-[0_10px_30px_rgba(0,0,0,0.8),0_0_20px_rgba(210,27,255,0.3)] border border-white/20 flex-shrink-0">
                 <Image
                   src={currentSong?.coverUrl || "/Neon Beatora Headphone Logo.png"}
-                  alt={currentSong?.title || "Beatora Logo"}
+                  alt={currentSong?.title || "Beatora Track"}
                   fill
                   className="object-cover"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-white/10 pointer-events-none" />
               </div>
-              <div className="min-w-0 flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <h3 className="font-extrabold text-base text-white tracking-tight truncate max-w-[140px]">
-                    {currentSong?.title || "Ready to Play"}
-                  </h3>
-                  <button
-                    onClick={() => setIsLiked(!isLiked)}
-                    className="text-zinc-400 hover:text-pink-400 transition-colors"
-                  >
-                    <Heart
-                      className={`w-3.5 h-3.5 ${
-                        isLiked ? "fill-pink-500 text-pink-500" : ""
-                      }`}
+
+              {/* Right Waveform (Cyan / Blue Bars) */}
+              <div className="flex items-center gap-1 sm:gap-1.5 h-20 justify-center flex-1">
+                {rightCurve.map((base, idx) => {
+                  const dataIdx = 14 + idx * 2;
+                  const val = isPlaying && frequencyData?.length > 0 ? (frequencyData[dataIdx] || 0) / 255 : 0;
+                  const barH = isPlaying
+                    ? Math.max(8, Math.min(52, val * 42 + beatIntensity * 12))
+                    : Math.max(8, base * 40);
+                  return (
+                    <div
+                      key={idx}
+                      className="w-1 sm:w-1.5 rounded-full bg-gradient-to-t from-blue-600 via-cyan-400 to-cyan-200 shadow-[0_0_10px_rgba(6,182,212,0.6)] transition-all duration-75"
+                      style={{ height: `${barH}px` }}
                     />
-                  </button>
-                </div>
-                <p className="text-xs text-zinc-400 truncate mt-0.5">
-                  {currentSong?.category || "Music"} •{" "}
-                  <span className="text-zinc-300 font-medium">
-                    {isPlaying ? "PLAYING" : "READY"}
-                  </span>
-                </p>
+                  );
+                })}
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-zinc-400 flex-shrink-0">
+            {/* Row 2: Playlist Icon + Centered Song Title & Artist + Like Heart */}
+            <div className="flex items-center justify-between gap-2 mb-4 relative z-10 px-1">
+              <a
+                href="#tracks-section"
+                className="p-1.5 text-zinc-400 hover:text-white transition-colors"
+                title="Playlist"
+              >
+                <ListMusic className="w-5 h-5" />
+              </a>
+
+              <div className="min-w-0 flex-1 text-center px-2">
+                <h3 className="font-extrabold text-base sm:text-lg text-white tracking-wide truncate">
+                  {currentSong?.title || "Midnight Pulse"}
+                </h3>
+                <p className="text-xs text-zinc-400 font-medium truncate mt-0.5">
+                  {currentSong?.artist || "Beatora Originals"}
+                </p>
+              </div>
+
               <button
                 onClick={() => setIsLiked(!isLiked)}
-                className="p-1.5 hover:text-white transition-colors"
+                className="p-1.5 text-zinc-400 hover:text-pink-400 transition-colors"
+                title="Favorite"
               >
                 <Heart
-                  className={`w-5 h-5 ${
+                  className={`w-5 h-5 transition-transform active:scale-125 ${
                     isLiked ? "fill-pink-500 text-pink-500" : ""
                   }`}
                 />
               </button>
-              <a
-                href="#tracks-section"
-                className="p-1.5 hover:text-white transition-colors"
-                title="View Playlist"
-              >
-                <ListMusic className="w-5 h-5" />
-              </a>
             </div>
-          </div>
 
-          {/* Row 2: Controls (Shuffle, Prev, Play/Pause, Next, Loop) */}
-          <div className="flex items-center justify-between px-2 mb-4 relative z-10">
-            <button
-              onClick={playNext}
-              className="w-10 h-10 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-fuchsia-500/50 flex items-center justify-center text-zinc-400 hover:text-white transition-all"
-              title="Shuffle"
-            >
-              <Shuffle className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={playPrevious}
-              className="text-zinc-300 hover:text-white transition-colors p-2"
-              title="Previous"
-              disabled={!currentSong}
-            >
-              <SkipBack className="w-5 h-5 fill-current" />
-            </button>
-
-            {/* Glowing Main Play/Pause Button */}
-            <button
-              onClick={togglePlay}
-              className="w-16 h-16 rounded-full bg-gradient-to-tr from-fuchsia-600 via-purple-500 to-cyan-400 p-[2px] shadow-[0_0_24px_rgba(210,27,255,0.7)] hover:shadow-[0_0_35px_rgba(210,27,255,0.9)] active:scale-95 transition-transform"
-            >
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-fuchsia-600 to-indigo-600 flex items-center justify-center border border-white/40">
-                {isPlaying ? (
-                  <Pause className="w-7 h-7 fill-white text-white" />
-                ) : (
-                  <Play className="w-7 h-7 fill-white text-white ml-1" />
-                )}
+            {/* Row 3: Sleek Timeline Scrub Bar with Glowing White Thumb */}
+            <div className="mb-2 relative z-10 px-1">
+              <input
+                type="range"
+                min={0}
+                max={duration || 100}
+                step={0.1}
+                value={currentTime}
+                onChange={(e) => seek(parseFloat(e.target.value))}
+                className="range-input !h-1.5 w-full cursor-pointer"
+                style={{ "--progress": `${progressPercent}%` } as React.CSSProperties}
+              />
+              <div className="flex items-center justify-between text-[11px] text-zinc-400 font-mono mt-1.5">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
               </div>
-            </button>
+            </div>
 
-            <button
-              onClick={playNext}
-              className="text-zinc-300 hover:text-white transition-colors p-2"
-              title="Next"
-              disabled={!currentSong}
-            >
-              <SkipForward className="w-5 h-5 fill-current" />
-            </button>
-
-            <button
-              onClick={() => setIsLooping(!isLooping)}
-              className={`w-10 h-10 rounded-2xl border flex items-center justify-center transition-all ${
-                isLooping
-                  ? "bg-fuchsia-600/30 border-fuchsia-500 text-fuchsia-300"
-                  : "bg-white/[0.04] border-white/10 text-zinc-400 hover:text-white"
-              }`}
-              title="Repeat"
-            >
-              <Repeat className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Row 3: Autoplay Capsule Pill with Toggle Switch */}
-          <div className="flex justify-center mb-4 relative z-10">
-            <button
-              onClick={toggleAutoplay}
-              className="w-full max-w-[240px] flex items-center justify-between px-4 py-2 rounded-full border border-fuchsia-500/50 bg-gradient-to-r from-purple-900/60 via-indigo-900/40 to-cyan-900/50 shadow-[0_0_18px_rgba(210,27,255,0.35)] transition-all"
-            >
-              <div className="flex items-center gap-2">
-                <Play className="w-3.5 h-3.5 fill-cyan-400 text-cyan-400" />
-                <span className="text-xs font-extrabold uppercase tracking-widest text-white">
-                  AUTOPLAY
-                </span>
-              </div>
-
-              {/* iOS-Style Toggle Switch */}
-              <div
-                className={`w-11 h-6 rounded-full p-0.5 transition-colors duration-200 ease-in-out ${
-                  autoplay ? "bg-cyan-500 shadow-[0_0_10px_#06b6d4]" : "bg-zinc-700"
+            {/* Row 4: Playback Transport Controls (Shuffle, Prev, Play/Pause, Next, Loop) */}
+            <div className="flex items-center justify-between px-1 pt-1 mb-2 relative z-10">
+              <button
+                onClick={toggleAutoplay}
+                className={`w-11 h-11 rounded-2xl border flex items-center justify-center transition-all ${
+                  autoplay
+                    ? "bg-fuchsia-500/20 border-fuchsia-500/60 text-fuchsia-300 shadow-[0_0_12px_rgba(210,27,255,0.4)]"
+                    : "bg-white/[0.06] border-white/10 text-zinc-400 hover:text-white"
                 }`}
+                title={autoplay ? "Autoplay ON (Random Shuffle)" : "Autoplay OFF"}
               >
-                <div
-                  className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ease-in-out ${
-                    autoplay ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </div>
-            </button>
-          </div>
+                <Shuffle className="w-4 h-4" />
+              </button>
 
-          {/* Row 4: Beat Indicator & Volume Slider */}
-          <div className="flex items-center justify-between gap-3 text-xs text-zinc-400 mb-3 px-1 relative z-10">
-            <div className="flex items-center gap-1.5 text-fuchsia-400 flex-shrink-0">
-              <Radio className="w-4 h-4 text-fuchsia-400 animate-pulse" />
-              <span className="text-[11px] font-bold tracking-wider text-white">
-                BEAT: {Math.round(beatIntensity * 100)}%
-              </span>
+              <button
+                onClick={playPrevious}
+                className="text-zinc-300 hover:text-white transition-colors p-2"
+                title="Previous"
+                disabled={!currentSong}
+              >
+                <SkipBack className="w-5 h-5 fill-current" />
+              </button>
+
+              {/* Glowing Hero Play / Pause Circle Button */}
+              <button
+                onClick={togglePlay}
+                className="w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 p-[2px] shadow-[0_0_28px_rgba(210,27,255,0.7),0_0_15px_rgba(56,189,248,0.5)] active:scale-95 transition-transform"
+                title={isPlaying ? "Pause" : "Play"}
+              >
+                <div className="w-full h-full rounded-full bg-gradient-to-br from-[#771ff5] via-[#482fe0] to-[#1e6df5] flex items-center justify-center border border-white/40 shadow-inner">
+                  {isPlaying ? (
+                    <Pause className="w-7 h-7 fill-white text-white" />
+                  ) : (
+                    <Play className="w-7 h-7 fill-white text-white ml-0.5" />
+                  )}
+                </div>
+              </button>
+
+              <button
+                onClick={playNext}
+                className="text-zinc-300 hover:text-white transition-colors p-2"
+                title="Next"
+                disabled={!currentSong}
+              >
+                <SkipForward className="w-5 h-5 fill-current" />
+              </button>
+
+              <button
+                onClick={() => setIsLooping(!isLooping)}
+                className={`w-11 h-11 rounded-2xl border flex items-center justify-center transition-all ${
+                  isLooping
+                    ? "bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(56,189,248,0.4)]"
+                    : "bg-white/[0.06] border-white/10 text-zinc-400 hover:text-white"
+                }`}
+                title="Repeat Track"
+              >
+                <Repeat className="w-4 h-4" />
+              </button>
             </div>
 
-            <div className="flex items-center gap-2 flex-1 max-w-[190px]">
-              <button onClick={toggleMute} className="text-zinc-400 hover:text-white">
-                {volume === 0 ? (
-                  <VolumeX className="w-4 h-4" />
-                ) : (
-                  <Volume2 className="w-4 h-4" />
-                )}
+            {/* Subtle Volume Slider Row */}
+            <div className="flex items-center justify-center gap-3 pt-2 text-zinc-500 relative z-10">
+              <button onClick={toggleMute} className="hover:text-white transition-colors">
+                {volume === 0 ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
               </button>
               <input
                 type="range"
@@ -230,28 +249,21 @@ export const PlayerBar: React.FC = () => {
                 step={0.01}
                 value={volume}
                 onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="range-input !h-1.5 flex-1"
+                className="range-input !h-1 max-w-[120px]"
                 style={{ "--progress": `${volume * 100}%` } as React.CSSProperties}
               />
-              <Volume2 className="w-4 h-4 text-zinc-500" />
+              <span className="text-[10px] font-mono text-zinc-400">{Math.round(volume * 100)}%</span>
             </div>
           </div>
 
-          {/* Row 5: Timeline Scrub Bar with Times */}
-          <div className="flex items-center gap-3 text-[11px] text-zinc-400 font-mono px-1 relative z-10">
-            <span className="w-8 text-left">{formatTime(currentTime)}</span>
-            <input
-              type="range"
-              min={0}
-              max={duration || 100}
-              step={0.1}
-              value={currentTime}
-              onChange={(e) => seek(parseFloat(e.target.value))}
-              className="range-input !h-2 flex-1"
-              style={{ "--progress": `${progressPercent}%` } as React.CSSProperties}
-            />
-            <span className="w-8 text-right">{formatTime(duration)}</span>
-          </div>
+          {/* Explore Library Pill Button Beneath Card */}
+          <a
+            href="#tracks-section"
+            className="w-full max-w-[260px] mx-auto mt-6 py-3 px-6 rounded-full border border-white/20 bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-blue-900/40 backdrop-blur-xl flex items-center justify-center gap-2 text-sm font-semibold text-white shadow-[0_0_22px_rgba(180,30,255,0.25)] hover:border-cyan-400 hover:shadow-[0_0_25px_rgba(49,201,255,0.4)] transition-all"
+          >
+            <span>Explore Library</span>
+            <span className="text-cyan-400 text-base leading-none">→</span>
+          </a>
         </div>
       </div>
 

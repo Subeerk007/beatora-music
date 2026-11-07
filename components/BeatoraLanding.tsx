@@ -7,15 +7,10 @@ import {
   Play,
   Pause,
   Headphones,
-  Sparkles,
-  Flame,
-  Radio,
   Search,
-  SlidersHorizontal,
   Compass,
   Disc3,
   Linkedin,
-  // WhatsApp,
 } from "lucide-react";
 import { useAudio } from "@/context/AudioContext";
 import { VisualizerCanvas } from "@/components/player/VisualizerCanvas";
@@ -68,12 +63,12 @@ export default function BeatoraLanding() {
 
   return (
     <div className="beatora-page min-h-screen pb-32">
-      {/* Calm ambient background glows - stable, no beat pulsing on screen */}
+      {/* Calm ambient background glows */}
       <div className="ambient ambient-pink" />
       <div className="ambient ambient-blue" />
 
       {/* Top Navigation */}
-      <header className="topbar justify-center !h-28">
+      <header className="topbar justify-center !h-24 md:!h-28">
         <Link href="/" className="flex items-center justify-center py-2" aria-label="Beatora home">
           <Image
             src="/Neon Beatora Headphone Logo.png"
@@ -86,72 +81,17 @@ export default function BeatoraLanding() {
         </Link>
       </header>
 
-      {/* Hero Section */}
-      <main className="hero">
-        <div className="hero-content max-w-2xl">
-          <div className="eyebrow">
-            <span />
-            NEXT-GEN SOUND EXPERIENCE
-          </div>
-          <h1>
-            FEEL THE BEAT. <br />
-            <span>HEAR THE FUTURE.</span>
-          </h1>
-          <p>
-            Immerse yourself into dynamic AI-composed beats with our reactive,
-            frequency-synchronized beat-jumping music engine.
-          </p>
+      {/* ============================================================== */}
+      {/* MOBILE VIEW: The Frosted Glass Media Player Card                */}
+      {/* ============================================================== */}
+      <div className="block lg:hidden px-4">
+        <PlayerBar />
+      </div>
 
-          <div className="hero-actions">
-            {songs.length > 0 ? (
-              <button
-                onClick={() => {
-                  if (currentSong) {
-                    togglePlay();
-                  } else {
-                    playSong(songs[0], songs);
-                  }
-                }}
-                className="listen-button"
-              >
-                {isPlaying ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white" />}
-                {isPlaying ? "PAUSE BEAT" : "START LISTENING"}
-              </button>
-            ) : (
-              <Link href="/admin/dashboard" className="listen-button">
-                UPLOAD FIRST TRACK
-              </Link>
-            )}
-
-            <a href="#tracks-section" className="explore-button">
-              Explore Library <span>→</span>
-            </a>
-          </div>
-
-          <div className="hero-caption">
-            <Radio className="w-3.5 h-3.5 text-fuchsia-400" />
-            <span>REAL-TIME FREQUENCY VISUALIZATION & BASS DETECTOR</span>
-          </div>
-        </div>
-
-        {/* Hero Graphic - Smooth rotating rings without beat vibration */}
-        <div className="hero-graphic">
-          <div className="graphic-ring ring-a" />
-          <div className="graphic-ring ring-b" />
-          <div className="graphic-core relative">
-            <Disc3 className={`w-14 h-14 ${isPlaying ? "animate-spin" : ""}`} />
-          </div>
-          <div className="orbit-dot dot-a" />
-          <div className="orbit-dot dot-b" />
-          <div className="orbit-dot dot-c" />
-          <div className="graphic-label">
-            {isPlaying ? `BEAT INTENSITY: ${Math.round(beatIntensity * 100)}%` : "READY TO PULSE"}
-          </div>
-        </div>
-      </main>
-
-      {/* Visualizer & Audio Player Section */}
-      <section id="visualizer-section" className="music-area mt-4">
+      {/* ============================================================== */}
+      {/* DESKTOP VIEW: Visualizer & Horizontal Player Bar               */}
+      {/* ============================================================== */}
+      <section id="visualizer-section" className="music-area mt-4 hidden lg:block">
         <div className="visualizer-wrap !h-24">
           <div className="visualizer-meta">
             <span className={`live-indicator ${isPlaying ? "live" : ""}`} />
@@ -170,7 +110,7 @@ export default function BeatoraLanding() {
       </section>
 
       {/* Tracks Browser & Explorer */}
-      <section id="tracks-section" className="max-w-[1320px] mx-auto px-6 md:px-12 mt-12">
+      <section id="tracks-section" className="max-w-[1320px] mx-auto px-6 md:px-12 mt-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/10">
           <div>
             <div className="section-label flex items-center gap-2 text-xs tracking-widest text-zinc-400 font-bold uppercase">
