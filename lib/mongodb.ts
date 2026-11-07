@@ -26,7 +26,8 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
   if (!cached.promise) {
     const opts: mongoose.ConnectOptions = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 2500, // 2.5 seconds timeout
+      serverSelectionTimeoutMS: 500, // Instant 500ms timeout so user UI loads without delay
+      connectTimeoutMS: 500,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {

@@ -14,11 +14,14 @@ import {
   SlidersHorizontal,
   Compass,
   Disc3,
+  Linkedin,
+  // WhatsApp,
 } from "lucide-react";
 import { useAudio } from "@/context/AudioContext";
 import { VisualizerCanvas } from "@/components/player/VisualizerCanvas";
 import { PlayerBar } from "@/components/player/PlayerBar";
 import { CircularLoader } from "@/components/ui/CircularLoader";
+import { CommentSection } from "@/components/CommentSection";
 import { ISong } from "@/types/song";
 
 const CATEGORIES = [
@@ -65,32 +68,19 @@ export default function BeatoraLanding() {
 
   return (
     <div className="beatora-page min-h-screen pb-32">
-      {/* Dynamic Ambient Glows that react to audio beat */}
-      <div
-        className="ambient ambient-pink transition-transform duration-100"
-        style={{
-          transform: isPlaying ? `scale(${1 + beatIntensity * 0.4}) translate(${beatIntensity * 10}px)` : "none",
-        }}
-      />
-      <div
-        className="ambient ambient-blue transition-transform duration-100"
-        style={{
-          transform: isPlaying ? `scale(${1 + beatIntensity * 0.5}) translate(-${beatIntensity * 15}px)` : "none",
-        }}
-      />
+      {/* Calm ambient background glows - stable, no beat pulsing on screen */}
+      <div className="ambient ambient-pink" />
+      <div className="ambient ambient-blue" />
 
       {/* Top Navigation */}
-      <header className="topbar justify-center !h-32">
+      <header className="topbar justify-center !h-28">
         <Link href="/" className="flex items-center justify-center py-2" aria-label="Beatora home">
           <Image
             src="/Neon Beatora Headphone Logo.png"
             alt="Beatora Logo"
             width={170}
             height={170}
-            className="w-36 md:w-44 h-auto object-contain transition-transform duration-150 drop-shadow-[0_0_25px_rgba(210,27,255,0.7)]"
-            style={{
-              transform: isPlaying ? `scale(${1 + beatIntensity * 0.15})` : "none",
-            }}
+            className="w-36 md:w-44 h-auto object-contain drop-shadow-[0_0_20px_rgba(210,27,255,0.6)]"
             priority
           />
         </Link>
@@ -144,29 +134,11 @@ export default function BeatoraLanding() {
           </div>
         </div>
 
-        {/* Hero Interactive Beat Graphic */}
+        {/* Hero Graphic - Smooth rotating rings without beat vibration */}
         <div className="hero-graphic">
-          <div
-            className="graphic-ring ring-a"
-            style={{
-              transform: isPlaying ? `scale(${1 + beatIntensity * 0.2})` : "none",
-              borderColor: isPlaying ? `rgba(210, 27, 255, ${0.4 + beatIntensity * 0.6})` : undefined,
-            }}
-          />
-          <div
-            className="graphic-ring ring-b"
-            style={{
-              transform: isPlaying ? `scale(${1 + beatIntensity * 0.3})` : "none",
-              borderColor: isPlaying ? `rgba(46, 216, 255, ${0.4 + beatIntensity * 0.6})` : undefined,
-            }}
-          />
-          <div
-            className="graphic-core relative"
-            style={{
-              transform: isPlaying ? `scale(${1 + beatIntensity * 0.25})` : "none",
-              boxShadow: isPlaying ? `0 0 ${40 + beatIntensity * 50}px #a52aff` : undefined,
-            }}
-          >
+          <div className="graphic-ring ring-a" />
+          <div className="graphic-ring ring-b" />
+          <div className="graphic-core relative">
             <Disc3 className={`w-14 h-14 ${isPlaying ? "animate-spin" : ""}`} />
           </div>
           <div className="orbit-dot dot-a" />
@@ -180,7 +152,7 @@ export default function BeatoraLanding() {
 
       {/* Visualizer & Audio Player Section */}
       <section id="visualizer-section" className="music-area mt-4">
-        <div className="visualizer-wrap">
+        <div className="visualizer-wrap !h-24">
           <div className="visualizer-meta">
             <span className={`live-indicator ${isPlaying ? "live" : ""}`} />
             <span>FREQUENCY ANALYZER</span>
@@ -222,8 +194,8 @@ export default function BeatoraLanding() {
           </div>
         </div>
 
-        {/* Category Pills */}
-        <div className="flex gap-2 overflow-x-auto py-4 no-scrollbar">
+        {/* Category Pills - Visible & Wrap */}
+        <div className="flex flex-wrap gap-2 py-4">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
@@ -322,10 +294,17 @@ export default function BeatoraLanding() {
         )}
       </section>
 
+      {/* Comment & Feedback Section */}
+      <CommentSection />
+
       {/* Footer */}
-      <footer className="footer mt-16">
-        <div>BEATORA MUSIC SOUND SYSTEM © 2026</div>
-        <span>BUILT WITH NEXT.JS, WEB AUDIO & MONGO DB</span>
+      <footer className="footer mt-16 flex flex-col items-center justify-center gap-2 pt-8 border-t border-white/10">
+        <div className="flex items-center gap-3">
+          <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-fuchsia-500 transition-colors" aria-label="LinkedIn">
+            <Linkedin className="w-5 h-5" />
+          </a>
+        </div>
+        <span className="text-xs text-zinc-500">BEATORA MUSIC SOUND SYSTEM © 2026 All Rights Reserved</span>
       </footer>
     </div>
   );

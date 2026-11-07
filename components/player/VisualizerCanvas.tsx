@@ -10,7 +10,7 @@ interface VisualizerProps {
 
 export const VisualizerCanvas: React.FC<VisualizerProps> = ({
   className = "",
-  barCount = 42,
+  barCount = 38,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { isPlaying, frequencyData, beatIntensity } = useAudio();
@@ -32,25 +32,27 @@ export const VisualizerCanvas: React.FC<VisualizerProps> = ({
       // If playing, use actual audio frequency data; otherwise draw a gentle ambient wave
       const data = frequencyData;
       const step = Math.floor(data.length / barCount) || 1;
-      const barWidth = (width / barCount) * 0.7;
+      const barWidth = (width / barCount) * 0.72;
       const gap = (width - barCount * barWidth) / (barCount - 1);
 
       for (let i = 0; i < barCount; i++) {
         const dataIndex = Math.min(i * step, data.length - 1);
         let value = isPlaying ? data[dataIndex] / 255 : 0;
 
-        // Add beat jumping boost to lower frequencies
-        if (isPlaying && i < barCount * 0.35) {
-          value = Math.min(1, value * (1 + beatIntensity * 0.8));
+        // Dynamic beat boost without flat clipping: preserves distinct heights per bar
+        if (isPlaying) {
+          const bassWeight = i < barCount * 0.35 ? (1 + beatIntensity * 0.35) : (1 + beatIntensity * 0.15);
+          value = Math.min(0.85, Math.pow(value, 0.95) * bassWeight);
         }
 
-        // Idle state wave if not playing
+        // Idle state subtle wave if not playing
         if (!isPlaying) {
-          const t = Date.now() * 0.003;
-          value = 0.08 + Math.sin(t + i * 0.25) * 0.05;
+          const t = Date.now() * 0.005;
+          value = 0.06 + Math.sin(t + i * 0.28) * 0.03;
         }
 
-        const barHeight = Math.max(4, value * (height * 0.9));
+        // Reduced compact bar height so bars stay nicely below header and don't touch top
+        const barHeight = Math.max(3, value * (height * 0.40));
         const x = i * (barWidth + gap);
         const y = height - barHeight;
 
@@ -64,15 +66,15 @@ export const VisualizerCanvas: React.FC<VisualizerProps> = ({
 
         // Rounded bar top
         ctx.beginPath();
-        const radius = Math.min(barWidth / 2, 4);
+        const radius = Math.min(barWidth / 2, 3);
         ctx.roundRect(x, y, barWidth, barHeight, [radius, radius, 0, 0]);
         ctx.fill();
 
         // Neon Glow effect on high peaks
-        if (value > 0.6) {
+        if (value > 0.65) {
           ctx.save();
           ctx.shadowColor = "#31c9ff";
-          ctx.shadowBlur = 12 * beatIntensity;
+          ctx.shadowBlur = 6 * beatIntensity;
           ctx.fill();
           ctx.restore();
         }
@@ -92,9 +94,8 @@ export const VisualizerCanvas: React.FC<VisualizerProps> = ({
     <canvas
       ref={canvasRef}
       width={700}
-      height={140}
+      height={90}
       className={`w-full h-full block ${className}`}
     />
   );
 };
-

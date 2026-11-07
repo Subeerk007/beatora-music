@@ -11,7 +11,7 @@ interface AudioContextType {
   volume: number;
   queue: ISong[];
   frequencyData: Uint8Array;
-  beatIntensity: number; // 0 to 1 for beat jumping
+  beatIntensity: number;
   autoplay: boolean;
   toggleAutoplay: () => void;
   playSong: (song: ISong, newQueue?: ISong[]) => void;
@@ -33,8 +33,8 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [volume, setVolumeState] = useState<number>(0.8);
   const [queue, setQueue] = useState<ISong[]>([]);
   const [beatIntensity, setBeatIntensity] = useState<number>(0);
-  const [frequencyData, setFrequencyData] = useState<Uint8Array>(new Uint8Array(64));
-  const [autoplay, setAutoplay] = useState<boolean>(true); // default true for seamless music
+  const [frequencyData, setFrequencyData] = useState<Uint8Array>(new Uint8Array(32));
+  const [autoplay, setAutoplay] = useState<boolean>(true);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -51,19 +51,25 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const autoplayRef = useRef<boolean>(autoplay);
   autoplayRef.current = autoplay;
 
-  // Initialize Audio element and Web Audio API
+  // Initialize persistent Audio element on mount
   useEffect(() => {
-    const audio = new Audio();
-    audio.crossOrigin = "anonymous";
-    audio.volume = volume;
-    audioRef.current = audio;
+    if (typeof window === "undefined") return;
+
+    // Reuse or create audio element
+    let audio = audioRef.current;
+    if (!audio) {
+      audio = new Audio();
+      audio.crossOrigin = "anonymous";
+      audio.volume = volume;
+      audioRef.current = audio;
+    }
 
     const onLoadedMetadata = () => {
-      setDuration(audio.duration || 0);
+      setDuration(audio?.duration || 0);
     };
 
     const onTimeUpdate = () => {
-      setCurrentTime(audio.currentTime);
+      if (audio) setCurrentTime(audio.currentTime);
     };
 
     const onEnded = () => {
@@ -84,46 +90,50 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     audio.addEventListener("pause", onPause);
 
     return () => {
-      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-      audio.removeEventListener("timeupdate", onTimeUpdate);
-      audio.removeEventListener("ended", onEnded);
-      audio.removeEventListener("play", onPlay);
-      audio.removeEventListener("pause", onPause);
-      audio.pause();
+      audio?.removeEventListener("loadedmetadata", onLoadedMetadata);
+      audio?.removeEventListener("timeupdate", onTimeUpdate);
+      audio?.removeEventListener("ended", onEnded);
+      audio?.removeEventListener("play", onPlay);
+      audio?.removeEventListener("pause", onPause);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
-      }
-      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
-        audioContextRef.current.close().catch(() => {});
       }
     };
   }, []);
 
-  // Web Audio Context setup for Beat Analysis
+  // Safe Web Audio Context setup (Never recreate source node for same element)
   const setupWebAudio = () => {
-    if (!audioRef.current) return;
-    if (!audioContextRef.current) {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const ctx = new AudioCtx();
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 128; // 64 frequency bins
-      analyser.smoothingTimeConstant = 0.8;
+    if (typeof window === "undefined" || !audioRef.current) return;
 
-      try {
-        const source = ctx.createMediaElementSource(audioRef.current);
-        source.connect(analyser);
-        analyser.connect(ctx.destination);
+    try {
+      if (!audioContextRef.current) {
+        const AudioCtx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (!AudioCtx) return;
+
+        const ctx = new AudioCtx();
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 64;
+        analyser.smoothingTimeConstant = 0.5;
+
+        // Ensure createMediaElementSource is only called ONCE
+        if (!sourceNodeRef.current) {
+          const source = ctx.createMediaElementSource(audioRef.current);
+          source.connect(analyser);
+          analyser.connect(ctx.destination);
+          sourceNodeRef.current = source;
+        }
 
         audioContextRef.current = ctx;
         analyserRef.current = analyser;
-        sourceNodeRef.current = source;
-      } catch (err) {
-        console.warn("Could not connect Web Audio source node:", err);
       }
-    }
 
-    if (audioContextRef.current && audioContextRef.current.state === "suspended") {
-      audioContextRef.current.resume();
+      if (audioContextRef.current && audioContextRef.current.state === "suspended") {
+        audioContextRef.current.resume().catch(() => {});
+      }
+    } catch (err) {
+      console.warn("Web Audio non-critical notice:", err);
     }
   };
 
@@ -131,19 +141,22 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const updateFrequencies = () => {
       if (analyserRef.current && isPlaying) {
-        const bufferLength = analyserRef.current.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-        analyserRef.current.getByteFrequencyData(dataArray);
-        setFrequencyData(dataArray);
+        try {
+          const bufferLength = analyserRef.current.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+          analyserRef.current.getByteFrequencyData(dataArray);
+          setFrequencyData(dataArray);
 
-        // Calculate low-end beat / bass jump intensity (first 10 bins)
-        let bassSum = 0;
-        const bassBins = Math.min(10, bufferLength);
-        for (let i = 0; i < bassBins; i++) {
-          bassSum += dataArray[i];
+          let bassSum = 0;
+          const bassBins = Math.min(8, bufferLength);
+          for (let i = 0; i < bassBins; i++) {
+            bassSum += dataArray[i];
+          }
+          const avgBass = bassSum / (bassBins * 255);
+          setBeatIntensity(Math.min(1, Math.max(0, (avgBass - 0.15) * 1.6)));
+        } catch {
+          // Ignore
         }
-        const avgBass = bassSum / (bassBins * 255);
-        setBeatIntensity(Math.min(1, Math.max(0, (avgBass - 0.2) * 1.5)));
       } else if (!isPlaying) {
         setBeatIntensity((prev) => Math.max(0, prev * 0.9));
       }
@@ -169,13 +182,12 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setCurrentSong(song);
     audioRef.current.src = song.audioUrl;
-    audioRef.current.load();
 
     try {
       await audioRef.current.play();
       setIsPlaying(true);
-    } catch (err) {
-      console.warn("Playback error (user interaction may be required):", err);
+    } catch {
+      // User gesture might be needed on mobile
     }
   };
 
@@ -189,16 +201,20 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } else {
       try {
         await audioRef.current.play();
-      } catch (err) {
-        console.warn("Playback error:", err);
+      } catch {
+        // Ignore
       }
     }
   };
 
   const seek = (seconds: number) => {
     if (!audioRef.current) return;
-    audioRef.current.currentTime = seconds;
-    setCurrentTime(seconds);
+    try {
+      audioRef.current.currentTime = seconds;
+      setCurrentTime(seconds);
+    } catch {
+      // Ignore
+    }
   };
 
   const setVolume = (val: number) => {
@@ -215,7 +231,6 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (q.length === 0) return;
 
     if (q.length === 1) {
-      // Replay the only song
       if (audioRef.current) {
         audioRef.current.currentTime = 0;
         audioRef.current.play().catch(() => {});
@@ -223,7 +238,6 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return;
     }
 
-    // Pick random song different from current
     const remaining = q.filter((s) => s._id !== curr?._id && s.audioUrl !== curr?.audioUrl);
     if (remaining.length > 0) {
       const randomIndex = Math.floor(Math.random() * remaining.length);

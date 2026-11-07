@@ -9,7 +9,6 @@ import {
   SkipForward,
   Volume2,
   VolumeX,
-  Music,
   Heart,
   Radio,
   Shuffle,
@@ -60,18 +59,10 @@ export const PlayerBar: React.FC = () => {
   return (
     <div className="w-full">
       {/* ============================================================== */}
-      {/* MOBILE CARD VIEW (Matches User Uploaded Reference Screenshot)  */}
+      {/* MOBILE & TABLET CARD VIEW (< 1024px)                           */}
       {/* ============================================================== */}
-      <div className="block md:hidden w-full max-w-sm mx-auto">
-        <div
-          className="relative overflow-hidden rounded-[32px] p-5 border border-fuchsia-500/40 bg-gradient-to-b from-[#180a30]/95 via-[#0c0924]/95 to-[#08081a]/95 backdrop-blur-2xl shadow-[0_0_35px_rgba(180,30,255,0.25)] transition-all duration-150"
-          style={{
-            boxShadow: isPlaying
-              ? `0 0 ${25 + beatIntensity * 30}px rgba(210, 27, 255, ${0.25 + beatIntensity * 0.3}), 0 15px 45px rgba(0,0,0,0.85)`
-              : undefined,
-            transform: isPlaying ? `scale(${1 + beatIntensity * 0.015})` : "none",
-          }}
-        >
+      <div className="block lg:hidden w-full max-w-sm mx-auto px-2">
+        <div className="relative overflow-hidden rounded-[32px] p-5 border border-fuchsia-500/40 bg-gradient-to-b from-[#180a30]/95 via-[#0c0924]/95 to-[#08081a]/95 backdrop-blur-2xl shadow-[0_0_35px_rgba(180,30,255,0.25)]">
           {/* Subtle outer neon stroke glow */}
           <div className="absolute inset-0 rounded-[32px] pointer-events-none border border-cyan-400/20" />
 
@@ -88,8 +79,8 @@ export const PlayerBar: React.FC = () => {
               </div>
               <div className="min-w-0 flex flex-col">
                 <div className="flex items-center gap-1.5">
-                  <h3 className="font-extrabold text-base text-white tracking-tight truncate">
-                    {currentSong?.title || "gemini"}
+                  <h3 className="font-extrabold text-base text-white tracking-tight truncate max-w-[140px]">
+                    {currentSong?.title || "Ready to Play"}
                   </h3>
                   <button
                     onClick={() => setIsLiked(!isLiked)}
@@ -103,7 +94,7 @@ export const PlayerBar: React.FC = () => {
                   </button>
                 </div>
                 <p className="text-xs text-zinc-400 truncate mt-0.5">
-                  {currentSong?.category || "Hip-Hop"} •{" "}
+                  {currentSong?.category || "Music"} •{" "}
                   <span className="text-zinc-300 font-medium">
                     {isPlaying ? "PLAYING" : "READY"}
                   </span>
@@ -114,7 +105,7 @@ export const PlayerBar: React.FC = () => {
             <div className="flex items-center gap-2 text-zinc-400 flex-shrink-0">
               <button
                 onClick={() => setIsLiked(!isLiked)}
-                className="p-1 hover:text-white transition-colors"
+                className="p-1.5 hover:text-white transition-colors"
               >
                 <Heart
                   className={`w-5 h-5 ${
@@ -124,7 +115,7 @@ export const PlayerBar: React.FC = () => {
               </button>
               <a
                 href="#tracks-section"
-                className="p-1 hover:text-white transition-colors"
+                className="p-1.5 hover:text-white transition-colors"
                 title="View Playlist"
               >
                 <ListMusic className="w-5 h-5" />
@@ -144,7 +135,7 @@ export const PlayerBar: React.FC = () => {
 
             <button
               onClick={playPrevious}
-              className="text-zinc-300 hover:text-white transition-colors"
+              className="text-zinc-300 hover:text-white transition-colors p-2"
               title="Previous"
               disabled={!currentSong}
             >
@@ -154,12 +145,7 @@ export const PlayerBar: React.FC = () => {
             {/* Glowing Main Play/Pause Button */}
             <button
               onClick={togglePlay}
-              className="w-16 h-16 rounded-full bg-gradient-to-tr from-fuchsia-600 via-purple-500 to-cyan-400 p-[2px] shadow-[0_0_24px_rgba(210,27,255,0.7)] hover:shadow-[0_0_35px_rgba(210,27,255,0.9)] active:scale-95 transition-all"
-              style={{
-                transform: isPlaying
-                  ? `scale(${1 + beatIntensity * 0.12})`
-                  : "scale(1)",
-              }}
+              className="w-16 h-16 rounded-full bg-gradient-to-tr from-fuchsia-600 via-purple-500 to-cyan-400 p-[2px] shadow-[0_0_24px_rgba(210,27,255,0.7)] hover:shadow-[0_0_35px_rgba(210,27,255,0.9)] active:scale-95 transition-transform"
             >
               <div className="w-full h-full rounded-full bg-gradient-to-br from-fuchsia-600 to-indigo-600 flex items-center justify-center border border-white/40">
                 {isPlaying ? (
@@ -172,7 +158,7 @@ export const PlayerBar: React.FC = () => {
 
             <button
               onClick={playNext}
-              className="text-zinc-300 hover:text-white transition-colors"
+              className="text-zinc-300 hover:text-white transition-colors p-2"
               title="Next"
               disabled={!currentSong}
             >
@@ -220,7 +206,7 @@ export const PlayerBar: React.FC = () => {
             </button>
           </div>
 
-          {/* Row 4: Beat Intensity Indicator & Volume Slider */}
+          {/* Row 4: Beat Indicator & Volume Slider */}
           <div className="flex items-center justify-between gap-3 text-xs text-zinc-400 mb-3 px-1 relative z-10">
             <div className="flex items-center gap-1.5 text-fuchsia-400 flex-shrink-0">
               <Radio className="w-4 h-4 text-fuchsia-400 animate-pulse" />
@@ -270,15 +256,14 @@ export const PlayerBar: React.FC = () => {
       </div>
 
       {/* ============================================================== */}
-      {/* DESKTOP BAR VIEW (Unchanged for Larger Screens)                 */}
+      {/* DESKTOP BAR VIEW (For screen width >= 1024px)                  */}
       {/* ============================================================== */}
       <div
-        className="player-card hidden md:grid transition-all duration-150"
+        className="player-card hidden lg:grid transition-all duration-150"
         style={{
           boxShadow: isPlaying
-            ? `0 0 ${20 + beatIntensity * 25}px rgba(210, 27, 255, ${0.2 + beatIntensity * 0.3}), 0 18px 60px rgba(0,0,0,0.8)`
+            ? `0 0 25px rgba(210, 27, 255, 0.25), 0 18px 60px rgba(0,0,0,0.8)`
             : undefined,
-          transform: isPlaying ? `scale(${1 + beatIntensity * 0.012})` : "none",
         }}
       >
         {/* Track Details */}
@@ -291,11 +276,7 @@ export const PlayerBar: React.FC = () => {
               sizes="59px"
               className="object-cover rounded-[14px]"
             />
-            <span
-              style={{
-                animationDuration: isPlaying ? `${Math.max(2, 6 - beatIntensity * 3)}s` : "9s",
-              }}
-            />
+            <span />
           </div>
 
           <div className="track-text">
@@ -318,7 +299,7 @@ export const PlayerBar: React.FC = () => {
         </div>
 
         {/* Transport Controls */}
-        <div className="transport flex items-center justify-center gap-3 md:gap-4">
+        <div className="transport flex items-center justify-center gap-3">
           <button
             onClick={playPrevious}
             className="transport-button"
@@ -333,9 +314,6 @@ export const PlayerBar: React.FC = () => {
             className="main-play"
             title={isPlaying ? "Pause" : "Play"}
             disabled={!currentSong}
-            style={{
-              transform: isPlaying ? `scale(${1 + beatIntensity * 0.1})` : "scale(1)",
-            }}
           >
             {isPlaying ? (
               <Pause className="w-6 h-6 fill-white text-white" />
@@ -354,10 +332,10 @@ export const PlayerBar: React.FC = () => {
           </button>
 
           {/* Autoplay Random Toggle Button */}
-          <div className="flex items-center gap-1.5 pl-2 ml-1 border-l border-white/20">
+          <div className="flex items-center gap-1.5 pl-3 ml-1 border-l border-white/20">
             <button
               onClick={toggleAutoplay}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase transition-all ${
                 autoplay
                   ? "bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white shadow-[0_0_12px_rgba(210,27,255,0.6)] border border-fuchsia-400/50"
                   : "bg-zinc-800/80 text-zinc-400 hover:text-white border border-zinc-700/60"
@@ -366,7 +344,6 @@ export const PlayerBar: React.FC = () => {
             >
               <Shuffle className={`w-3 h-3 ${autoplay ? "text-cyan-200 animate-pulse" : "text-zinc-500"}`} />
               <span>AUTOPLAY</span>
-              {/* Neon Toggle indicator pill */}
               <span
                 className={`w-2 h-2 rounded-full transition-all ${
                   autoplay ? "bg-cyan-300 shadow-[0_0_6px_#38bdf8]" : "bg-zinc-600"
@@ -389,9 +366,10 @@ export const PlayerBar: React.FC = () => {
             </span>
           </div>
 
-          <button onClick={toggleMute} className="transport-button !p-1 text-zinc-300">
-            {volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          <button onClick={toggleMute} className="transport-button !p-1.5">
+            {volume === 0 ? <VolumeX className="w-4 h-4 text-zinc-400" /> : <Volume2 className="w-4 h-4 text-zinc-300" />}
           </button>
+
           <input
             type="range"
             min={0}
@@ -404,7 +382,7 @@ export const PlayerBar: React.FC = () => {
           />
         </div>
 
-        {/* Timeline Scrub Bar */}
+        {/* Scrub Timeline */}
         <div className="timeline">
           <span>{formatTime(currentTime)}</span>
           <input

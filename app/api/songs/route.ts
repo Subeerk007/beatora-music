@@ -5,6 +5,33 @@ import { ISong } from "@/types/song";
 import fs from "fs";
 import path from "path";
 
+function getLocalUploadedSongs(): ISong[] {
+  const songsDir = path.join(process.cwd(), "public", "uploads", "songs");
+  const result: ISong[] = [];
+  if (fs.existsSync(songsDir)) {
+    const files = fs.readdirSync(songsDir);
+    for (const file of files) {
+      if (file.endsWith(".mp3") || file.endsWith(".wav")) {
+        const cleanTitle = file
+          .replace(/^\d+-/, "")
+          .replace(/\.(mp3|wav)$/, "")
+          .replace(/_/g, " ");
+        result.push({
+          _id: `file-${file}`,
+          title: cleanTitle,
+          artist: "Studio Upload",
+          category: "Electronic",
+          audioUrl: `/uploads/songs/${file}`,
+          coverUrl: "/Neon Beatora Headphone Logo.png",
+          plays: 0,
+          createdAt: new Date().toISOString(),
+        });
+      }
+    }
+  }
+  return result;
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -13,9 +40,9 @@ export async function GET(req: Request) {
 
     let songs: ISong[] = [];
 
+    // Try MongoDB query quickly
     try {
       await connectToDatabase();
-
       const filter: Record<string, unknown> = {};
       if (category && category !== "All") {
         filter.category = new RegExp(category, "i");
@@ -29,58 +56,33 @@ export async function GET(req: Request) {
 
       const docs = await Song.find(filter).sort({ createdAt: -1 }).lean();
       songs = docs as unknown as ISong[];
-    } catch (dbError) {
-      console.warn("MongoDB not reachable, using fallback file-based song catalog:", dbError);
+    } catch {
+      // Fallback to local files without waiting
     }
 
-    // If database returned 0 songs or is temporarily offline, check public uploads directory
+    // If MongoDB returned no songs or is offline, serve local files instantly
     if (songs.length === 0) {
-      let candidateSeeds: ISong[] = [];
+      let localSongs = getLocalUploadedSongs();
 
-      // Also dynamically pick up any mp3 directly in public/uploads/songs
-      const songsDir = path.join(process.cwd(), "public", "uploads", "songs");
-      if (fs.existsSync(songsDir)) {
-        const files = fs.readdirSync(songsDir);
-        for (const file of files) {
-          if (file.endsWith(".mp3") || file.endsWith(".wav")) {
-            const audioUrl = `/uploads/songs/${file}`;
-            if (!candidateSeeds.some((s) => s.audioUrl === audioUrl)) {
-              const cleanTitle = file.replace(/^\d+-/, "").replace(/\.(mp3|wav)$/, "").replace(/_/g, " ");
-              candidateSeeds.push({
-                _id: `file-${file}`,
-                title: cleanTitle,
-                artist: "Studio Upload",
-                category: "Electronic",
-                audioUrl,
-                coverUrl: "/Neon Beatora Headphone Logo.png",
-                plays: 0,
-                createdAt: new Date().toISOString(),
-              });
-            }
-          }
-        }
-      }
-
-      // Apply category and query filters to fallback/file list
       if (category && category !== "All") {
-        candidateSeeds = candidateSeeds.filter((s) =>
+        localSongs = localSongs.filter((s) =>
           s.category?.toLowerCase().includes(category.toLowerCase())
         );
       }
       if (query) {
-        candidateSeeds = candidateSeeds.filter(
+        localSongs = localSongs.filter(
           (s) =>
             s.title?.toLowerCase().includes(query.toLowerCase()) ||
             s.artist?.toLowerCase().includes(query.toLowerCase())
         );
       }
 
-      songs = candidateSeeds;
+      songs = localSongs;
     }
 
     return NextResponse.json({ success: true, count: songs.length, songs });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to fetch songs";
-    return NextResponse.json({ success: false, error: message, songs: [] }, { status: 200 });
+    return NextResponse.json({ success: false, error: message, songs: getLocalUploadedSongs() }, { status: 200 });
   }
 }
