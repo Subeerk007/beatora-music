@@ -21,7 +21,17 @@ import { PlayerBar } from "@/components/player/PlayerBar";
 import { CircularLoader } from "@/components/ui/CircularLoader";
 import { ISong } from "@/types/song";
 
-const CATEGORIES = ["All", "Electronic", "Cyberpunk", "Lo-Fi", "Synthwave", "Bass Boosted", "Hip-Hop"];
+const CATEGORIES = [
+  "All",
+  "Electronic",
+  "Cyberpunk",
+  "Lo-Fi",
+  "Synthwave",
+  "Bass Boosted",
+  "Hip-Hop",
+  "Romantic",
+  "Emotional",
+];
 
 export default function BeatoraLanding() {
   const { currentSong, isPlaying, playSong, togglePlay, beatIntensity } = useAudio();

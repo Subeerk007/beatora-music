@@ -5,6 +5,10 @@ import { AudioProvider } from "@/context/AudioContext";
 export const metadata: Metadata = {
   title: "Beatora — AI Music & Beat Sound Portal",
   description: "Next-gen music player portal with beat-reactive visualizer and admin song studio",
+  icons: {
+    icon: "/Neon Beatora Headphone Logo.png",
+    apple: "/Neon Beatora Headphone Logo.png",
+  },
 };
 
 export default function RootLayout({

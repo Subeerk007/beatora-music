@@ -248,6 +248,8 @@ export default function AdminDashboardPage() {
                   <option value="Synthwave">Synthwave</option>
                   <option value="Bass Boosted">Bass Boosted</option>
                   <option value="Hip-Hop">Hip-Hop</option>
+                  <option value="Romantic">Romantic</option>
+                  <option value="Emotional">Emotional</option>
                   <option value="Ambient">Ambient</option>
                 </select>
               </div>
