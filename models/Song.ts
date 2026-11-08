@@ -9,6 +9,8 @@ export interface ISongDocument extends Document {
   audioPublicId?: string;
   coverUrl?: string;
   coverPublicId?: string;
+  bannerUrl?: string;
+  bannerPublicId?: string;
   plays: number;
   createdAt: Date;
   updatedAt: Date;
@@ -50,6 +52,12 @@ const SongSchema: Schema = new Schema(
     coverPublicId: {
       type: String,
     },
+    bannerUrl: {
+      type: String,
+    },
+    bannerPublicId: {
+      type: String,
+    },
     plays: {
       type: Number,
       default: 0,
@@ -59,6 +67,9 @@ const SongSchema: Schema = new Schema(
     timestamps: true,
   }
 );
+
+SongSchema.index({ category: 1 });
+SongSchema.index({ createdAt: -1 });
 
 const Song: Model<ISongDocument> =
   mongoose.models.Song || mongoose.model<ISongDocument>("Song", SongSchema);

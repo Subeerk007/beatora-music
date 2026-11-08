@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     const category = (formData.get("category") as string)?.trim() || "Electronic";
     const audioFile = formData.get("audio") as File | null;
     const coverFile = formData.get("cover") as File | null;
+    const bannerFile = formData.get("banner") as File | null;
 
     if (!title) {
       return NextResponse.json({ error: "Song title is required" }, { status: 400 });
@@ -48,7 +49,10 @@ export async function POST(req: Request) {
     console.log(`[UPLOAD] Audio uploaded to Cloudinary: ${audioUpload.secure_url}`);
 
     let coverUrl = "/Neon Beatora Headphone Logo.png";
-    let coverPublicId: string | null = null;
+    let coverPublicId: string | undefined = undefined;
+    let bannerUrl: string | undefined = undefined;
+    let bannerPublicId: string | undefined = undefined;
+
     try {
       if (coverFile && typeof coverFile !== "string" && coverFile.size > 0) {
         const coverBuffer = Buffer.from(await coverFile.arrayBuffer());
@@ -61,11 +65,25 @@ export async function POST(req: Request) {
         coverPublicId = coverUpload.public_id;
         console.log(`[UPLOAD] Cover uploaded to Cloudinary: ${coverUrl}`);
       }
+
+      if (bannerFile && typeof bannerFile !== "string" && bannerFile.size > 0) {
+        const bannerBuffer = Buffer.from(await bannerFile.arrayBuffer());
+        const bannerUpload = await uploadBuffer(bannerBuffer, {
+          folder: "beatora/banners",
+          public_id: `${uploadId}-banner`,
+          resource_type: "image",
+        });
+        bannerUrl = bannerUpload.secure_url;
+        bannerPublicId = bannerUpload.public_id;
+        console.log(`[UPLOAD] Banner uploaded to Cloudinary: ${bannerUrl}`);
+      }
     } catch (error) {
       try {
         await deleteAsset(audioUpload.public_id, "video");
+        if (coverPublicId) await deleteAsset(coverPublicId, "image");
+        if (bannerPublicId) await deleteAsset(bannerPublicId, "image");
       } catch (cleanupError) {
-        console.warn("Cloudinary audio cleanup failed after cover upload error:", cleanupError);
+        console.warn("Cloudinary cleanup failed after image upload error:", cleanupError);
       }
       throw error;
     }
@@ -73,18 +91,23 @@ export async function POST(req: Request) {
     try {
       await connectToDatabase();
       console.log("[UPLOAD] Saving song to MongoDB...");
-      const newSong = await Song.create({
+      
+      const songData: Record<string, unknown> = {
         title,
         artist,
         category,
         audioUrl: audioUpload.secure_url,
         audioPublicId: audioUpload.public_id,
         coverUrl,
-        ...(coverPublicId ? { coverPublicId } : {}),
         plays: 0,
-      });
+      };
+      if (coverPublicId) songData.coverPublicId = coverPublicId;
+      if (bannerUrl) songData.bannerUrl = bannerUrl;
+      if (bannerPublicId) songData.bannerPublicId = bannerPublicId;
 
-      console.log(`[UPLOAD] Song saved to MongoDB: id=${newSong._id}, title="${newSong.title}"`);
+      const newSong = await Song.create(songData);
+
+      console.log(`[UPLOAD] Song saved to MongoDB: id=${newSong._id}`);
 
       return NextResponse.json({
         success: true,
@@ -94,9 +117,8 @@ export async function POST(req: Request) {
     } catch (error) {
       try {
         await deleteAsset(audioUpload.public_id, "video");
-        if (coverPublicId) {
-          await deleteAsset(coverPublicId, "image");
-        }
+        if (coverPublicId) await deleteAsset(coverPublicId, "image");
+        if (bannerPublicId) await deleteAsset(bannerPublicId, "image");
       } catch (cleanupError) {
         console.warn("Cloudinary cleanup failed after database error:", cleanupError);
       }

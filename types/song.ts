@@ -8,6 +8,8 @@ export interface ISong {
   audioPublicId?: string;
   coverUrl?: string;
   coverPublicId?: string;
+  bannerUrl?: string;
+  bannerPublicId?: string;
   plays?: number;
   createdAt?: string | Date;
   updatedAt?: string | Date;

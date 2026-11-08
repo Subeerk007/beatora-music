@@ -13,7 +13,6 @@ import {
   Linkedin,
 } from "lucide-react";
 import { useAudio } from "@/context/AudioContext";
-import { VisualizerCanvas } from "@/components/player/VisualizerCanvas";
 import { PlayerBar } from "@/components/player/PlayerBar";
 import { CircularLoader } from "@/components/ui/CircularLoader";
 import { CommentSection } from "@/components/CommentSection";
@@ -32,11 +31,14 @@ const CATEGORIES = [
 ];
 
 export default function BeatoraLanding() {
-  const { currentSong, isPlaying, playSong, togglePlay, beatIntensity } = useAudio();
+  const { currentSong, isPlaying, playSong, togglePlay } = useAudio();
   const [songs, setSongs] = useState<ISong[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // Background image: Uses the song's uploaded bannerUrl, or the clean Beatora hero backdrop (which has no baked-in card/logo!)
+  const backdropImage = currentSong?.bannerUrl || "/beatora-clean-hero.jpg";
 
   // Fetch songs
   useEffect(() => {
@@ -68,50 +70,46 @@ export default function BeatoraLanding() {
       <div className="ambient ambient-pink" />
       <div className="ambient ambient-blue" />
 
-      {/* Top Navigation */}
-      <header className="topbar justify-center !h-24 md:!h-28">
-        <Link href="/" className="flex items-center justify-center py-2" aria-label="Beatora home">
+      {/* ============================================================== */}
+      {/* FULL-SCREEN EDGE-TO-EDGE CINEMATIC HERO BACKDROP               */}
+      {/* ============================================================== */}
+      <div className="relative w-full overflow-hidden min-h-[580px] md:min-h-[640px] flex flex-col justify-between pb-8">
+        {/* Full-Screen Background Image (Wide Desktop & Centered Mobile) */}
+        <div className="absolute inset-0 z-0">
           <Image
-            src="/Neon Beatora Headphone Logo.png"
-            alt="Beatora Logo"
-            width={170}
-            height={170}
-            className="w-36 md:w-44 h-auto object-contain drop-shadow-[0_0_20px_rgba(210,27,255,0.6)]"
+            src={backdropImage}
+            alt="Beatora Hero Background"
+            fill
+            className="object-cover object-center transition-all duration-700 pointer-events-none"
             priority
           />
-        </Link>
-      </header>
-
-      {/* ============================================================== */}
-      {/* MOBILE VIEW: The Frosted Glass Media Player Card                */}
-      {/* ============================================================== */}
-      <div className="block lg:hidden px-4">
-        <PlayerBar />
-      </div>
-
-      {/* ============================================================== */}
-      {/* DESKTOP VIEW: Visualizer & Horizontal Player Bar               */}
-      {/* ============================================================== */}
-      <section id="visualizer-section" className="music-area mt-4 hidden lg:block">
-        <div className="visualizer-wrap !h-24">
-          <div className="visualizer-meta">
-            <span className={`live-indicator ${isPlaying ? "live" : ""}`} />
-            <span>FREQUENCY ANALYZER</span>
-            <span className="meta-right">
-              {isPlaying ? `${Math.round(beatIntensity * 100)}% BEAT JUMP` : "IDLE"}
-            </span>
-          </div>
-
-          <VisualizerCanvas />
-          <div className="visualizer-baseline" />
+          {/* Subtle dark gradient overlay so crystal player and text stand out */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#070512]/80 via-black/35 to-[#070512] backdrop-blur-[1px]" />
+          <div className="absolute inset-0 bg-black/20" />
         </div>
 
-        {/* Dedicated Main Player Bar */}
-        <PlayerBar />
-      </section>
+        {/* Top Navigation Bar floating over full-screen backdrop */}
+        <header className="topbar justify-center !h-24 md:!h-28 relative z-10 w-full">
+          <Link href="/" className="flex items-center justify-center py-2" aria-label="Beatora home">
+            <Image
+              src="/Neon Beatora Headphone Logo.png"
+              alt="Beatora Logo"
+              width={170}
+              height={170}
+              className="w-36 md:w-44 h-auto object-contain drop-shadow-[0_0_20px_rgba(210,27,255,0.7)]"
+              priority
+            />
+          </Link>
+        </header>
+
+        {/* Crystal Glass Media Player Floating in Center */}
+        <div className="relative z-10 w-full flex justify-center px-4 my-auto">
+          <PlayerBar />
+        </div>
+      </div>
 
       {/* Tracks Browser & Explorer */}
-      <section id="tracks-section" className="max-w-[1320px] mx-auto px-6 md:px-12 mt-10">
+      <section id="tracks-section" className="max-w-[1320px] mx-auto px-6 md:px-12 mt-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/10">
           <div>
             <div className="section-label flex items-center gap-2 text-xs tracking-widest text-zinc-400 font-bold uppercase">
