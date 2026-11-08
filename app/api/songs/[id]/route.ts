@@ -7,6 +7,8 @@ import fs from "fs";
 import path from "path";
 import mongoose from "mongoose";
 
+export const maxDuration = 60;
+
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }

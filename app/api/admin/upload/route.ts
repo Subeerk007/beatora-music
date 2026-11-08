@@ -4,6 +4,16 @@ import Song from "@/models/Song";
 import { getAdminSession } from "@/lib/auth";
 import { deleteAsset, uploadBuffer } from "@/lib/cloudinary";
 
+// Allow large uploads (songs & high-res images) up to 50MB
+export const config = {
+  api: {
+    bodyParser: false,
+    responseLimit: false,
+  },
+};
+
+export const maxDuration = 60; // 60 seconds timeout for high-res uploads
+
 export async function POST(req: Request) {
   try {
     const session = await getAdminSession();

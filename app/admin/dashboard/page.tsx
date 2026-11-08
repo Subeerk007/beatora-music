@@ -119,9 +119,16 @@ export default function AdminDashboardPage() {
         body: formData,
       });
 
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text();
+        throw new Error(text || `Upload error (status ${res.status})`);
+      }
+
       if (!res.ok) {
-        throw new Error(data.error || "Upload failed");
+        throw new Error(data?.error || "Upload failed");
       }
 
       setStatusMsg({ type: "success", text: "Music successfully uploaded and published!" });
@@ -177,9 +184,16 @@ export default function AdminDashboardPage() {
         body: formData,
       });
 
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text();
+        throw new Error(text || `Update error (status ${res.status})`);
+      }
+
       if (!res.ok) {
-        throw new Error(data.error || "Failed to update track");
+        throw new Error(data?.error || "Failed to update track");
       }
 
       setSongs((prev) =>
