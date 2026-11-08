@@ -71,21 +71,20 @@ export const PlayerBar: React.FC = () => {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[330px] sm:w-[370px] h-[330px] sm:h-[370px] rounded-full border border-fuchsia-500/30 pointer-events-none shadow-[0_0_80px_rgba(217,70,239,0.35)] blur-[2px]" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[370px] sm:w-[410px] h-[370px] sm:h-[410px] rounded-full border border-cyan-400/25 pointer-events-none shadow-[0_0_90px_rgba(6,182,212,0.3)] blur-[2px]" />
 
-          {/* Master Crystal Glass Card */}
+          {/* Master Crystal Glass Card (Ultra-Transparent Mode) */}
           <div
-            className="relative rounded-[38px] p-5 sm:p-6 backdrop-blur-[26px] backdrop-saturate-[180%] border-[1.5px] border-white/30 border-t-white/60 border-l-pink-400/50 border-r-cyan-400/50 border-b-cyan-400/40 shadow-[0_25px_60px_rgba(0,0,0,0.5),inset_0_1.5px_2px_rgba(255,255,255,0.6),inset_0_-1.5px_2px_rgba(255,255,255,0.2),inset_10px_0_25px_rgba(217,70,239,0.15),inset_-10px_-10px_30px_rgba(6,182,212,0.2)] overflow-hidden transition-all duration-300"
+            className="relative rounded-[38px] p-5 sm:p-6 backdrop-blur-[14px] backdrop-saturate-[160%] border-[1.5px] border-white/25 border-t-white/45 border-l-pink-400/35 border-r-cyan-400/35 border-b-cyan-400/25 shadow-[0_20px_50px_rgba(0,0,0,0.4),inset_0_1.5px_2px_rgba(255,255,255,0.45),inset_0_-1px_1px_rgba(255,255,255,0.15)] overflow-hidden transition-all duration-300"
             style={{
               background:
-                "linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 35%, rgba(18, 10, 36, 0.28) 75%, rgba(255, 255, 255, 0.1) 100%)",
+                "linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(10, 5, 20, 0.12) 80%, rgba(255, 255, 255, 0.05) 100%)",
             }}
           >
-            {/* Diagonal Crystal Specular Light Flare */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-white/5 to-transparent pointer-events-none rounded-[38px]" />
-            <div className="absolute -top-10 -left-10 w-36 h-36 bg-white/20 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-10 -right-10 w-36 h-36 bg-cyan-400/15 rounded-full blur-2xl pointer-events-none" />
+            {/* Subtle Crystal Specular Highlight */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-transparent pointer-events-none rounded-[38px]" />
+            <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
 
             {/* Specular Inner Glass Bevel Highlight */}
-            <div className="absolute inset-[1px] rounded-[37px] border border-white/20 pointer-events-none" />
+            <div className="absolute inset-[1px] rounded-[37px] border border-white/15 pointer-events-none" />
 
             {/* Row 1: Left Pink Waves + Center Album Art + Right Cyan Waves */}
             <div className="flex items-center justify-between gap-2 mb-5 relative z-10">

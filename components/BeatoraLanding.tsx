@@ -73,19 +73,18 @@ export default function BeatoraLanding() {
       {/* ============================================================== */}
       {/* FULL-SCREEN EDGE-TO-EDGE CINEMATIC HERO BACKDROP               */}
       {/* ============================================================== */}
-      <div className="relative w-full overflow-hidden min-h-[580px] md:min-h-[640px] flex flex-col justify-between pb-8">
-        {/* Full-Screen Background Image (Wide Desktop & Centered Mobile) */}
+      <div className="relative w-full overflow-hidden min-h-[560px] md:min-h-[640px] lg:min-h-[680px] flex flex-col justify-between pb-8">
+        {/* Full-Screen Background Image (Edge-to-edge perfect cover fit, zero black corners) */}
         <div className="absolute inset-0 z-0">
           <Image
             src={backdropImage}
             alt="Beatora Hero Background"
             fill
-            className="object-cover object-center transition-all duration-700 pointer-events-none"
+            className="object-cover object-center scale-[1.02] transition-all duration-700 pointer-events-none"
             priority
           />
-          {/* Subtle dark gradient overlay so crystal player and text stand out */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#070512]/80 via-black/35 to-[#070512] backdrop-blur-[1px]" />
-          <div className="absolute inset-0 bg-black/20" />
+          {/* Subtle dark gradient overlay so crystal player and text stand out smoothly */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#070512]/60 via-black/20 to-[#070512] pointer-events-none" />
         </div>
 
         {/* Top Navigation Bar floating over full-screen backdrop */}
