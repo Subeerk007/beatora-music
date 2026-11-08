@@ -39,29 +39,35 @@ export async function GET(req: Request) {
     const query = searchParams.get("q");
 
     let songs: ISong[] = [];
+    let dbSuccess = false;
 
-    // Try MongoDB query quickly
+    // Query MongoDB Atlas
     try {
       await connectToDatabase();
       const filter: Record<string, unknown> = {};
+
       if (category && category !== "All") {
-        filter.category = new RegExp(category, "i");
+        filter.category = new RegExp(category.trim(), "i");
       }
-      if (query) {
+
+      if (query && query.trim()) {
+        const qRegex = new RegExp(query.trim(), "i");
         filter.$or = [
-          { title: new RegExp(query, "i") },
-          { artist: new RegExp(query, "i") },
+          { title: qRegex },
+          { artist: qRegex },
         ];
       }
 
       const docs = await Song.find(filter).sort({ createdAt: -1 }).lean();
       songs = docs as unknown as ISong[];
-    } catch {
-      // Fallback to local files without waiting
+      dbSuccess = true;
+      console.log(`[SONGS_API] Fetched ${songs.length} songs from Atlas (category: ${category || "All"})`);
+    } catch (dbErr) {
+      console.error("[SONGS_API] MongoDB connection error:", dbErr);
     }
 
-    // If MongoDB returned no songs or is offline, serve local files instantly
-    if (songs.length === 0) {
+    // Only fallback to local files if database connection failed
+    if (!dbSuccess && songs.length === 0) {
       let localSongs = getLocalUploadedSongs();
 
       if (category && category !== "All") {
@@ -69,7 +75,7 @@ export async function GET(req: Request) {
           s.category?.toLowerCase().includes(category.toLowerCase())
         );
       }
-      if (query) {
+      if (query && query.trim()) {
         localSongs = localSongs.filter(
           (s) =>
             s.title?.toLowerCase().includes(query.toLowerCase()) ||
@@ -80,9 +86,17 @@ export async function GET(req: Request) {
       songs = localSongs;
     }
 
-    return NextResponse.json({ success: true, count: songs.length, songs });
+    return NextResponse.json({
+      success: true,
+      count: songs.length,
+      songs,
+      source: dbSuccess ? "database" : "local",
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to fetch songs";
-    return NextResponse.json({ success: false, error: message, songs: getLocalUploadedSongs() }, { status: 200 });
+    return NextResponse.json(
+      { success: false, error: message, songs: getLocalUploadedSongs() },
+      { status: 200 }
+    );
   }
 }

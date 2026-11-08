@@ -41,6 +41,7 @@ export default function BeatoraLanding() {
   // Fetch songs
   useEffect(() => {
     const fetchPortalSongs = async () => {
+      setLoading(true);
       try {
         const queryParams = new URLSearchParams();
         if (selectedCategory !== "All") queryParams.set("category", selectedCategory);
@@ -159,16 +160,30 @@ export default function BeatoraLanding() {
         ) : songs.length === 0 ? (
           <div className="text-center py-20 bg-zinc-900/30 border border-dashed border-zinc-800 rounded-3xl p-8">
             <Disc3 className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
-            <h3 className="text-white font-semibold mb-1">No songs in library</h3>
+            <h3 className="text-white font-semibold mb-1">
+              {selectedCategory !== "All" ? `No "${selectedCategory}" tracks found` : "No songs in library"}
+            </h3>
             <p className="text-zinc-500 text-xs mb-4">
-              Sign in as admin to upload your favorite tracks!
+              {selectedCategory !== "All"
+                ? `Currently no songs uploaded under "${selectedCategory}". Click "All" to view all available tracks!`
+                : "Sign in as admin to upload your favorite tracks!"}
             </p>
-            <Link
-              href="/admin/login"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-fuchsia-600 to-purple-600 shadow-lg shadow-fuchsia-600/30 hover:opacity-95"
-            >
-              Admin Upload Portal
-            </Link>
+            <div className="flex items-center justify-center gap-3">
+              {selectedCategory !== "All" && (
+                <button
+                  onClick={() => setSelectedCategory("All")}
+                  className="px-5 py-2.5 rounded-full text-xs font-bold text-white bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                >
+                  View All Songs
+                </button>
+              )}
+              <Link
+                href="/admin/login"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-fuchsia-600 to-purple-600 shadow-lg shadow-fuchsia-600/30 hover:opacity-95"
+              >
+                Admin Upload Portal
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">

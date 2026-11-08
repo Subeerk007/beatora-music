@@ -19,18 +19,19 @@ if (!global.mongooseCache) {
 }
 
 export async function connectToDatabase(): Promise<typeof mongoose> {
-  if (cached.conn) {
+  if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
   }
 
   if (!cached.promise) {
     const opts: mongoose.ConnectOptions = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 500, // Instant 500ms timeout so user UI loads without delay
-      connectTimeoutMS: 500,
+      serverSelectionTimeoutMS: 8000,
+      connectTimeoutMS: 10000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
+      console.log("[MongoDB] Connected successfully to Atlas cluster");
       return mongooseInstance;
     });
   }
@@ -39,6 +40,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    console.error("[MongoDB] Connection failed:", e);
     throw e;
   }
 
